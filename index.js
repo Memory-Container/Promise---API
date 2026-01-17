@@ -50,10 +50,46 @@ filterEven.then((result) => {
 forEachTest(firstTest, consoleLog)
 forEachPair(secondTest, consoleLog2)
 
-
 async function flagData() {
-    let API = await fetch("https://restcountries.com/v2/all](https://restcountries.com/v2/all)")
-    if (API.status != 200) {throw new Error("API Status was not 200")}
-    let { data } = await API.json();
-    consoleLog(data)
+    try {
+        const API = await fetch('https://open.oapi.vn/location/countries')
+        if (!API.ok) {
+        throw new Error(`HTTP error! status: ${API.status}`);
+        }
+        const { data } = await API.json();
+        consoleLog(data)
+        createFlagDisplay(data)
+    }
+    catch (error) {
+        console.error(error);
+    }
 }
+function createFlagDisplay(data) {
+    const container = document.querySelector(".container")
+    let string = ""
+    for (element of data) {
+        string += 
+        `
+        <div class="flagContainer">
+            <img src="${element.flag}" loading="lazy" alt="Country Flag">
+            ${ element.name }
+        </div>
+        `
+    }
+    container.innerHTML = string
+}
+flagData()
+
+async function getIP() {
+    try {
+        const API = await fetch("https://api.ipify.org/?format=json")
+        if (API == "") { throw new Error("No response from API endpoint")}
+        const { ip } = await API.json()
+        const IPC = document.querySelector(".IP")
+        IPC.textContent = `Your IP is ${ ip }`
+    }
+    catch (e) {
+        console.error(error);
+    }
+}
+getIP()
