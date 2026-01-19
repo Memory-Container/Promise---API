@@ -1,6 +1,11 @@
 const firstTest = [1, 2, 3, 4, 5, 6, "Lê Văn A", "Nguyễn Thị B", "Đỗ Thị C"]
 const secondTest = [10, 20, 30, 40, 50, 60]
 const thirdTest = [1, 2, 4, 6, 8, 10, 3, 5, 7, 9]
+let search = document.querySelector(".search")
+let pageNumber = ""
+let fullData = ""
+let pages = 1
+let currentPage = 1
 function throwError(message) {
     throw new Error(message)
 }
@@ -57,22 +62,33 @@ async function flagData() {
         throw new Error(`HTTP error! status: ${API.status}`);
         }
         const { data } = await API.json();
-        consoleLog(data)
-        createFlagDisplay(data)
+        fullData = data
+        pagination(fullData, 20)
+        createFlagDisplay(fullData, 0, 20)
     }
     catch (error) {
         console.error(error);
     }
 }
-function createFlagDisplay(data) {
-    const container = document.querySelector(".container")
+function createFlagDisplay(data, from, to) {
     let string = ""
-    for (element of data) {
+    const container = document.querySelector(".container")
+    if (data.length == 0) {
+        string = 
+        `
+        <div class="flagContainer">
+            Sorry... We couldn't find anything
+        </div>
+        `
+        container.innerHTML = string
+        return
+    }
+    for (let i = from; i < Math.min(to, data.length); i++) {
         string += 
         `
         <div class="flagContainer">
-            <img src="${element.flag}" loading="lazy" alt="Country Flag">
-            ${ element.name }
+            <img src="${data[i].flag}" loading="lazy" onerror="placeholderImage(this)">
+            ${ data[i].name }
         </div>
         `
     }
@@ -93,3 +109,46 @@ async function getIP() {
     }
 }
 getIP()
+function placeholderImage(image) {
+    if (image.src != "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png") {
+        image.src = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"
+    }
+}
+let pagesContainer = document.querySelectorAll(".pages")
+let initialize = false
+function pagination(data, limit) {
+    pages = Math.ceil(data.length / limit)
+    pagesContainer.forEach((element) => {
+        element.innerHTML = `Page <input type="number" min="1" max="${pages}" value="1" class="numberPage"> out of ${pages}`
+    })
+}
+function next() {
+    if (currentPage + 1 > pages) {
+        return
+    } else {
+        currentPage++
+        createFlagDisplay(fullData, 20 * (currentPage - 1), 20 * currentPage)
+        pagesContainer.forEach((element) => {
+            element.innerHTML = `Page <input type="number" min="1" max="${pages}" value="${currentPage}" class="numberPage"> out of ${pages}`
+        })
+    }
+}
+function prev() {
+    if (currentPage - 1 < 1) {
+        return
+    } else {
+        currentPage--
+        createFlagDisplay(fullData, 20 * (currentPage - 1), 20 * currentPage)
+        pagesContainer.forEach((element) => {
+            element.innerHTML = `Page <input type="number" min="1" max="${pages}" value="${currentPage}" class="numberPage"> out of ${pages}`
+        })
+    }
+}
+let x = ""
+search.addEventListener("input", () => {
+    let filteredData = fullData.filter(element => new RegExp(`^${search.value.toLocaleLowerCase()}`).test(element.name.toLocaleLowerCase()))
+    currentPage = 1
+    x = filteredData
+    pagination(filteredData, 20)
+    createFlagDisplay(filteredData, 20 * (currentPage - 1), 20 * currentPage)
+})
